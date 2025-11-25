@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BarberShop | Corte & Barba</title>
+  <meta name="description" content="Barbearia local - cortes, barba, ambiente acolhedor. Agende online." />
+  <style>
+    :root{
+      --bg:#0f1724;
+      --card:#0b1220;
+      --accent:#e3a13b;
+      --muted:#9aa6b2;
+      --glass: rgba(255,255,255,0.03);
+      --radius:12px;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:
+        radial-gradient(800px 400px at 10% 10%, rgba(227,161,59,0.06), transparent 10%),
+        radial-gradient(600px 300px at 90% 90%, rgba(18,28,45,0.18), transparent 10%),
+        var(--bg);
+      color:#e6eef6;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      line-height:1.4;
+      padding-bottom:64px;
+    }
+
+    header{
+      display:flex;
+      gap:16px;
+      align-items:center;
+      justify-content:space-between;
+      padding:20px;
+      max-width:1100px;
+      margin:0 auto;
+    }
+    .brand{display:flex;gap:14px;align-items:center}
+    .logo{
+      width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg, var(--accent), #b66a1a);
+      display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(0,0,0,0.4);
+    }
+    .logo svg{width:32px;height:32px;fill:#111}
+    .brand h1{font-size:18px;margin:0}
+    nav{display:flex;gap:14px;align-items:center}
+    nav a{color:var(--muted);text-decoration:none;padding:8px 12px;border-radius:8px;font-weight:600}
+    nav a:hover{color:#fff;background:var(--glass)}
+    .cta{background:linear-gradient(90deg, var(--accent), #ffb86b);color:#111;padding:8px 14px;border-radius:10px;font-weight:700;box-shadow:0 6px 18px rgba(227,161,59,0.08)}
+    /* Hero */
+    .hero{
+      max-width:1100px;margin:18px auto;padding:28px;border-radius:16px;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+      display:grid;grid-template-columns:1fr 380px;gap:26px;align-items:center;
+    }
+    .hero-left h2{margin:0 0 6px 0;font-size:28px}
+    .hero-left p{color:var(--muted);margin:0 0 18px}
+    .actions{display:flex;gap:12px}
+    .btn{padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),#ffb86b);color:#111}
+    .btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.03)}
+    .hero-right{
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      padding:18px;border-radius:12px;height:220px;display:flex;flex-direction:column;gap:8px;justify-content:center;align-items:center;text-align:center;
+    }
+    .pole{width:72px;height:72px;border-radius:100%;background:conic-gradient(#fff,#e33 25%,#fff 25%,#e33 50%,#fff 50%);box-shadow:0 8px 30px rgba(0,0,0,0.5)}
+    /* Services */
+    .grid{max-width:1100px;margin:22px auto;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:0 16px}
+    .card{background:var(--card);padding:16px;border-radius:12px}
+    .service h3{margin:0 0 8px 0}
+    .service p{margin:0;color:var(--muted);font-size:14px}
+    .price{margin-top:10px;font-weight:800;color:var(--accent)}
+    /* Gallery */
+    .gallery{max-width:1100px;margin:18px auto;padding:0 16px}
+    .gallery-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .thumb{border-radius:10px;background-size:cover;background-position:center;height:120px;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.02)}
+    /* Booking / Contact */
+    .two-col{max-width:1100px;margin:18px auto;display:grid;grid-template-columns:1fr 380px;gap:18px;padding:0 16px}
+    form{background:var(--card);padding:16px;border-radius:12px;display:flex;flex-direction:column;gap:10px}
+    label{font-size:13px;color:var(--muted)}
+    input,select,textarea{padding:10px;border-radius:8px;border:0;background:rgba(255,255,255,0.02);color:#fff}
+    .hours{background:var(--card);padding:14px;border-radius:12px;color:var(--muted)}
+    footer{max-width:1100px;margin:28px auto;padding:18px;color:var(--muted);text-align:center}
+    /* Responsive */
+    @media(max-width:900px){
+      .hero, .two-col{grid-template-columns:1fr}
+      .grid{grid-template-columns:repeat(2,1fr)}
+      .gallery-grid{grid-template-columns:repeat(3,1fr)}
+    }
+    @media(max-width:540px){
+      header{padding:12px}
+      nav{display:none}
+      .grid{grid-template-columns:1fr}
+      .gallery-grid{grid-template-columns:repeat(2,1fr)}
+    }
+    /* Modal / Lightbox */
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}
+    .overlay.show{opacity:1;pointer-events:auto}
+    .modal{background:linear-gradient(180deg, #071022, #091426);padding:18px;border-radius:12px;max-width:520px;width:94%}
+    .close{background:transparent;border:0;color:var(--muted);font-weight:700;cursor:pointer}
+    .success{background:linear-gradient(90deg,#1f6f3a,#2fd27c);padding:10px;border-radius:10px;color:#03120a;font-weight:800;text-align:center}
+    /* small helpers */
+    .muted{color:var(--muted)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo" aria-hidden>
+        <!-- barber icon -->
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 2 L14 10" stroke="#111" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M18.5 5.5 L20 7" stroke="#111" stroke-width="1.6" stroke-linecap="round" />
+          <path d="M3 21c6-3 10-6 18-10" stroke="#111" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1>BarberShop</h1>
+        <div class="muted" style="font-size:13px">Corte • Barba • Estilo</div>
+      </div>
+    </div>
+
+    <nav aria-label="Navegação">
+      <a href="#servicos">Serviços</a>
+      <a href="#galeria">Galeria</a>
+      <a href="#contato">Contato</a>
+      <button class="cta btn" id="openBooking">Agendar</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-left">
+        <h2 id="hero-title">Seu estilo, do jeito que você gosta.</h2>
+        <p>Ambiente acolhedor, profissionais experientes e produtos de qualidade. Agende rápido ou visiste sem marcar.</p>
+        <div class="actions">
+          <button class="btn primary" id="bookNow">Agendar Online</button>
+          <button class="btn ghost" id="viewServices">Ver Serviços</button>
+        </div>
+        <ul style="margin-top:14px;color:var(--muted);font-size:14px">
+          <li>Atendimento com cortesia</li>
+          <li>Produtos premium</li>
+          <li>Wi-fi e café</li>
+        </ul>
+      </div>
+      <aside class="hero-right" aria-hidden>
+        <div class="pole" title="Barber pole"></div>
+        <div style="font-weight:800;margin-top:8px">BarberShop — Tradição & Estilo</div>
+        <div class="muted" style="font-size:13px">Aberto hoje: 09:00 — 20:00</div>
+      </aside>
+    </section>
+
+    <section id="servicos" style="padding:0 16px">
+      <h2 style="max-width:1100px;margin:8px auto 0;color:#fff">Serviços populares</h2>
+      <div class="grid" aria-hidden>
+        <article class="card service">
+          <h3>Corte Masculino</h3>
+          <p>Cortes clássicos ou modernos. Consultoria de estilo incluída.</p>
+          <div class="price">R$ 45</div>
+        </article>
+        <article class="card service">
+          <h3>Barba completa</h3>
+          <p>Modelagem, navalha e finalização com óleos especiais.</p>
+          <div class="price">R$ 35</div>
+        </article>
+        <article class="card service">
+          <h3>Corte + Barba</h3>
+          <p>Combo econômico: corte e barba com atenção aos detalhes.</p>
+          <div class="price">R$ 75</div>
+        </article>
+      </div>
+    </section>
+
+    <section id="galeria" class="gallery" aria-labelledby="galeria-title">
+      <h2 id="galeria-title" style="margin:8px 0;color:#fff">Galeria</h2>
+      <div class="gallery-grid">
+        <div class="thumb" style="background-image:url('https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=7b0f7f18b93d0b9f6b6f4f1cfae47f8c')" data-src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=7b0f7f18b93d0b9f6b6f4f1cfae47f8c" alt="Corte"></div>
+        <div class="thumb" style="background-image:url('https://images.unsplash.com/photo-1551782450-a2132b4ba21d?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=732d4f6f0d9f7bb0ef3f3f2b4a5c0c7c')" data-src="https://images.unsplash.com/photo-1551782450-a2132b4ba21d?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=732d4f6f0d9f7bb0ef3f3f2b4a5c0c7c" alt="Barba"></div>
+        <div class="thumb" style="background-image:url('https://images.unsplash.com/photo-1526045612212-70caf35c14df?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=3b2a3f5c3b9d5f34c7f1a2d5f7a8c9d0')" data-src="https://images.unsplash.com/photo-1526045612212-70caf35c14df?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=3b2a3f5c3b9d5f34c7f1a2d5f7a8c9d0" alt="Atendimento"></div>
+        <div class="thumb" style="background-image:url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=2b1b4f2a1c3e4d5f6a7b8c9d0e1f2a3b')" data-src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=2b1b4f2a1c3e4d5f6a7b8c9d0e1f2a3b" alt="Interior"></div>
+      </div>
+    </section>
+
+    <section class="two-col" id="contato" aria-labelledby="contato-title">
+      <div>
+        <form id="contactForm" novalidate>
+          <h3 style="margin:0 0 6px 0">Agende ou envie uma mensagem</h3>
+          <label for="name">Nome</label>
+          <input id="name" name="name" required placeholder="Seu nome" />
+          <label for="phone">Telefone</label>
+          <input id="phone" name="phone" required placeholder="(00) 0 0000-0000" />
+          <label for="service">Serviço</label>
+          <select id="service" name="service">
+            <option>Corte Masculino</option>
+            <option>Barba completa</option>
+            <option>Corte + Barba</option>
+          </select>
+          <label for="date">Data</label>
+          <input type="date" id="date" name="date" />
+          <label for="time">Hora</label>
+          <input type="time" id="time" name="time" />
+          <label for="notes">Observações</label>
+          <textarea id="notes" name="notes" rows="3" placeholder="Ex: prefiro tal corte..."></textarea>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn primary" type="submit">Enviar / Agendar</button>
+            <div id="feedback" style="flex:1"></div>
+          </div>
+        </form>
+      </div>
+      <aside>
+        <div class="hours">
+          <strong>Horário</strong>
+          <div style="margin-top:8px">Seg–Sex: 09:00 — 20:00</div>
+          <div>Sáb: 09:00 — 16:00</div>
+          <div>Dom: Fechado</div>
+          <hr style="margin:12px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)">
+          <div><strong>Endereço:</strong><div class="muted">Rua Exemplo, 123 - Centro</div></div>
+          <div style="margin-top:8px"><strong>Telefone:</strong><div class="muted">(11) 99999-9999</div></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <footer>
+    <div>© <span id="year"></span> BarberShop — Todos os direitos reservados</div>
+  </footer>
+
+  <!-- Modal / Overlay for booking and lightbox -->
+  <div id="overlay" class="overlay" role="dialog" aria-hidden="true">
+    <div class="modal" id="modalContent" role="document">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <strong id="modalTitle">Agendamento</strong>
+        <button class="close" id="closeModal" aria-label="Fechar">FECHAR</button>
+      </div>
+      <div id="modalBody">
+        <form id="miniBooking">
+          <label for="mname">Nome</label>
+          <input id="mname" required placeholder="Seu nome" />
+          <label for="mphone">Telefone</label>
+          <input id="mphone" required placeholder="(00) 0 0000-0000" />
+          <label for="mdate">Data</label>
+          <input type="date" id="mdate" />
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="btn primary" type="submit">Confirmar</button>
+            <button type="button" class="btn ghost" id="cancelModal">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lightbox overlay (reuses overlay/modal) -->
+  <div id="lightbox" class="overlay" aria-hidden="true">
+    <div class="modal" style="max-width:900px;display:flex;flex-direction:column;gap:8px">
+      <button class="close" id="closeLightbox" style="align-self:flex-end">FECHAR</button>
+      <img id="lightboxImg" src="" alt="" style="width:100%;border-radius:8px;max-height:70vh;object-fit:cover" />
+      <div id="lightboxCaption" class="muted" style="font-size:13px"></div>
+    </div>
+  </div>
+
+  <script>
+    // small helper
+    const qs = s => document.querySelector(s);
+    const qsa = s => document.querySelectorAll(s);
+
+    // dynamic year
+    qs('#year').textContent = new Date().getFullYear();
+
+    // smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(a=>{
+      a.addEventListener('click', e=>{
+        e.preventDefault();
+        const id = a.getAttribute('href').slice(1);
+        const el = document.getElementById(id);
+        if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+      });
+    });
+
+    // Booking modal
+    const overlay = qs('#overlay');
+    const modalTitle = qs('#modalTitle');
+    const openBookingBtns = [qs('#openBooking'), qs('#bookNow')].filter(Boolean);
+    openBookingBtns.forEach(b=>b.addEventListener('click', ()=> openModal()));
+
+    function openModal(){
+      modalTitle.textContent = 'Agendamento rápido';
+      overlay.classList.add('show');
+      overlay.setAttribute('aria-hidden','false');
+      qs('#mname').focus();
+    }
+    function closeModal(){
+      overlay.classList.remove('show');
+      overlay.setAttribute('aria-hidden','true');
+    }
+    qs('#closeModal').addEventListener('click', closeModal);
+    qs('#cancelModal').addEventListener('click', closeModal);
+    overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModal(); });
+
+    // handle mini booking
+    qs('#miniBooking').addEventListener('submit', e=>{
+      e.preventDefault();
+      const name = qs('#mname').value.trim();
+      const phone = qs('#mphone').value.trim();
+      if(!name || !phone){
+        alert('Preencha nome e telefone.');
+        return;
+      }
+      // simulate submit
+      closeModal();
+      showFeedback('Agendamento recebido! Entraremos em contato.', true);
+    });
+
+    // Contact form submit
+    qs('#contactForm').addEventListener('submit', e=>{
+      e.preventDefault();
+      const name = qs('#name').value.trim();
+      const phone = qs('#phone').value.trim();
+      if(!name || !phone){
+        showFeedback('Preencha nome e telefone.', false);
+        return;
+      }
+      // here you would send data to your backend (fetch)
+      showFeedback('Obrigado! Solicitação enviada com sucesso.', true);
+      e.target.reset();
+    });
+
+    function showFeedback(msg, ok){
+      const f = qs('#feedback');
+      f.innerHTML = '<div class="'+(ok? 'success' : '')+'">'+msg+'</div>';
+      setTimeout(()=>{ f.innerHTML = ''; }, 4000);
+    }
+
+    // Gallery lightbox
+    qsa('.thumb').forEach(t=>{
+      t.addEventListener('click', ()=>{
+        const src = t.getAttribute('data-src') || t.style.backgroundImage.slice(5,-2);
+        qs('#lightboxImg').src = src;
+        qs('#lightboxCaption').textContent = t.getAttribute('alt') || '';
+        qs('#lightbox').classList.add('show');
+        qs('#lightbox').setAttribute('aria-hidden','false');
+      });
+    });
+    qs('#closeLightbox').addEventListener('click', ()=>{ hideLightbox(); });
+    qs('#lightbox').addEventListener('click', e=>{ if(e.target===qs('#lightbox')) hideLightbox(); });
+    function hideLightbox(){ qs('#lightbox').classList.remove('show'); qs('#lightbox').setAttribute('aria-hidden','true'); qs('#lightboxImg').src=''; }
+
+    // small input masks (phone)
+    document.querySelectorAll('input[type="tel"], #phone, #mphone').forEach(input=>{
+      input.addEventListener('input', e=>{
+        let v = e.target.value.replace(/\D/g,'');
+        if(v.length>11) v = v.slice(0,11);
+        v = v.replace(/^(\d{2})(\d)/g,'($1) $2');
+        v = v.replace(/(\d{5})(\d{4})$/,'$1-$2');
+        e.target.value = v;
+      });
+    });
+
+    // keyboard accessibility: close modal with Esc
+    document.addEventListener('keydown', e=>{
+      if(e.key==='Escape'){
+        closeModal();
+        hideLightbox();
+      }
+    });
+
+    // simple progressive enhancement: set min date for booking
+    const today = new Date().toISOString().split('T')[0];
+    ['#date','#mdate'].forEach(id=>{
+      const el = qs(id);
+      if(el) el.setAttribute('min', today);
+    });
+  </script>
+</body>
+</html>
