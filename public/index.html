@@ -261,116 +261,278 @@
   </div>
 
   <script>
-    // small helper
+    // small helpers
     const qs = s => document.querySelector(s);
-    const qsa = s => document.querySelectorAll(s);
+    const qsa = s => Array.from(document.querySelectorAll(s));
+
+    // safe query wrappers
+    const on = (sel, ev, fn) => { const el = qs(sel); if (el) el.addEventListener(ev, fn); };
+    const exists = sel => !!qs(sel);
 
     // dynamic year
-    qs('#year').textContent = new Date().getFullYear();
+    if (qs('#year')) qs('#year').textContent = new Date().getFullYear();
 
-    // smooth scroll
-    document.querySelectorAll('a[href^="#"]').forEach(a=>{
+    // smooth scroll for internal anchors
+    qsa('a[href^="#"]').forEach(a=>{
       a.addEventListener('click', e=>{
+        const href = a.getAttribute('href');
+        if (!href || href === '#') return;
         e.preventDefault();
-        const id = a.getAttribute('href').slice(1);
+        const id = href.slice(1);
         const el = document.getElementById(id);
-        if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+        if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
       });
     });
 
-    // Booking modal
+    // --- Modal / Booking UI ---
     const overlay = qs('#overlay');
     const modalTitle = qs('#modalTitle');
     const openBookingBtns = [qs('#openBooking'), qs('#bookNow')].filter(Boolean);
-    openBookingBtns.forEach(b=>b.addEventListener('click', ()=> openModal()));
+
+    openBookingBtns.forEach(b => b.addEventListener('click', () => openModal()));
 
     function openModal(){
-      modalTitle.textContent = 'Agendamento rápido';
+      if(!overlay) return;
+      if(modalTitle) modalTitle.textContent = 'Agendamento rápido';
       overlay.classList.add('show');
       overlay.setAttribute('aria-hidden','false');
-      qs('#mname').focus();
+      const mname = qs('#mname');
+      if(mname) mname.focus();
     }
     function closeModal(){
+      if(!overlay) return;
       overlay.classList.remove('show');
       overlay.setAttribute('aria-hidden','true');
     }
-    qs('#closeModal').addEventListener('click', closeModal);
-    qs('#cancelModal').addEventListener('click', closeModal);
-    overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModal(); });
+    on('#closeModal','click', closeModal);
+    on('#cancelModal','click', closeModal);
+    if(overlay) overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
 
-    // handle mini booking
-    qs('#miniBooking').addEventListener('submit', e=>{
-      e.preventDefault();
-      const name = qs('#mname').value.trim();
-      const phone = qs('#mphone').value.trim();
-      if(!name || !phone){
-        alert('Preencha nome e telefone.');
-        return;
-      }
-      // simulate submit
-      closeModal();
-      showFeedback('Agendamento recebido! Entraremos em contato.', true);
-    });
-
-    // Contact form submit
-    qs('#contactForm').addEventListener('submit', e=>{
-      e.preventDefault();
-      const name = qs('#name').value.trim();
-      const phone = qs('#phone').value.trim();
-      if(!name || !phone){
-        showFeedback('Preencha nome e telefone.', false);
-        return;
-      }
-      // here you would send data to your backend (fetch)
-      showFeedback('Obrigado! Solicitação enviada com sucesso.', true);
-      e.target.reset();
-    });
-
-    function showFeedback(msg, ok){
-      const f = qs('#feedback');
-      f.innerHTML = '<div class="'+(ok? 'success' : '')+'">'+msg+'</div>';
-      setTimeout(()=>{ f.innerHTML = ''; }, 4000);
-    }
-
-    // Gallery lightbox
+    // --- Lightbox (gallery) ---
     qsa('.thumb').forEach(t=>{
       t.addEventListener('click', ()=>{
         const src = t.getAttribute('data-src') || t.style.backgroundImage.slice(5,-2);
-        qs('#lightboxImg').src = src;
-        qs('#lightboxCaption').textContent = t.getAttribute('alt') || '';
-        qs('#lightbox').classList.add('show');
-        qs('#lightbox').setAttribute('aria-hidden','false');
+        const lb = qs('#lightbox');
+        if (!lb) return;
+        const img = qs('#lightboxImg');
+        if (img) img.src = src;
+        const cap = qs('#lightboxCaption');
+        if (cap) cap.textContent = t.getAttribute('alt') || '';
+        lb.classList.add('show');
+        lb.setAttribute('aria-hidden','false');
       });
     });
-    qs('#closeLightbox').addEventListener('click', ()=>{ hideLightbox(); });
-    qs('#lightbox').addEventListener('click', e=>{ if(e.target===qs('#lightbox')) hideLightbox(); });
-    function hideLightbox(){ qs('#lightbox').classList.remove('show'); qs('#lightbox').setAttribute('aria-hidden','true'); qs('#lightboxImg').src=''; }
+    on('#closeLightbox','click', ()=>{ hideLightbox(); });
+    on('#lightbox','click', e=>{ if(e.target === qs('#lightbox')) hideLightbox(); });
+    function hideLightbox(){ const lb = qs('#lightbox'); if(!lb) return; lb.classList.remove('show'); lb.setAttribute('aria-hidden','true'); const img = qs('#lightboxImg'); if(img) img.src=''; }
 
-    // small input masks (phone)
-    document.querySelectorAll('input[type="tel"], #phone, #mphone').forEach(input=>{
+    // --- Input phone mask (handles #phone and #mphone) ---
+    qsa('#phone, #mphone, input[type="tel"]').forEach(input=>{
       input.addEventListener('input', e=>{
-        let v = e.target.value.replace(/\D/g,'');
-        if(v.length>11) v = v.slice(0,11);
+        let v = e.target.value.replace(/\D/g,'').slice(0,11);
         v = v.replace(/^(\d{2})(\d)/g,'($1) $2');
         v = v.replace(/(\d{5})(\d{4})$/,'$1-$2');
         e.target.value = v;
       });
     });
 
-    // keyboard accessibility: close modal with Esc
-    document.addEventListener('keydown', e=>{
-      if(e.key==='Escape'){
-        closeModal();
-        hideLightbox();
+    // --- Shared feedback UI ---
+    function showFeedback(msg, ok = true, target = '#feedback'){
+      const container = qs(target);
+      if(!container) {
+        // fallback alert
+        window.alert(msg);
+        return;
       }
-    });
+      container.innerHTML = `<div class="${ok ? 'success' : ''}" role="status" aria-live="polite">${msg}</div>`;
+      setTimeout(()=>{ if(container) container.innerHTML = ''; }, 4000);
+    }
 
-    // simple progressive enhancement: set min date for booking
+    // --- Simple client-side bookings list injection ---
+    const bookingsContainerId = 'bookingsListArea';
+    const contactSection = qs('#contato');
+    if(contactSection && !qs(`#${bookingsContainerId}`)){
+      const listEl = document.createElement('div');
+      listEl.id = bookingsContainerId;
+      listEl.style.marginTop = '12px';
+      listEl.innerHTML = `
+        <h3 style="margin:6px 0 8px 0">Agendamentos recentes</h3>
+        <div id="bookingsList" class="card" style="padding:12px;max-height:220px;overflow:auto">Carregando...</div>
+      `;
+      // insert small list under the two-col (inside the section next to the form)
+      contactSection.insertBefore(listEl, contactSection.children[1] || null);
+    }
+    const bookingsListEl = qs('#bookingsList');
+
+    // format date/time readable
+    function formatDateTime(dStr, tStr){
+      if(!dStr && !tStr) return '';
+      try{
+        const d = dStr ? new Date(dStr) : null;
+        const datePart = d ? d.toLocaleDateString('pt-BR') : '';
+        const t = tStr || '';
+        return `${datePart}${t ? ' — ' + t : ''}`;
+      }catch(e){ return `${dStr || ''} ${tStr || ''}`; }
+    }
+
+    // --- Backend endpoints (change as needed) ---
+    const API_BASE = '/api/bookings'; // GET returns array, POST accepts JSON and returns created item
+
+    // fetch and render bookings
+    async function refreshBookings(){
+      if(!bookingsListEl) return;
+      bookingsListEl.innerHTML = 'Carregando...';
+      // first attempt to fetch from backend
+      try {
+        const res = await fetch(API_BASE, { method: 'GET', headers: { 'Accept': 'application/json' } });
+        if (!res.ok) throw new Error('Erro ao buscar agendamentos');
+        const data = await res.json();
+        renderBookings(data);
+      } catch (err) {
+        // fallback to localStorage cached bookings
+        const cached = JSON.parse(localStorage.getItem('bookings-offline') || '[]');
+        if (cached.length) {
+          bookingsListEl.innerHTML = '<div class="muted" style="font-size:13px;margin-bottom:8px">Exibindo dados locais (offline)</div>';
+          renderBookings(cached);
+        } else {
+          bookingsListEl.innerHTML = '<div class="muted">Não há agendamentos disponíveis.</div>';
+        }
+      }
+    }
+
+    function renderBookings(items = []){
+      if(!bookingsListEl) return;
+      if (!Array.isArray(items) || items.length === 0) {
+        bookingsListEl.innerHTML = '<div class="muted">Nenhum agendamento encontrado.</div>';
+        return;
+      }
+      const html = items.slice().reverse().map(it=>{
+        // expected shape: { id, name, phone, service, date, time, createdAt }
+        const when = formatDateTime(it.date, it.time);
+        const created = it.createdAt ? new Date(it.createdAt).toLocaleString('pt-BR') : '';
+        return `
+          <div style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+              <div style="font-weight:700">${escapeHtml(it.name || '—')}</div>
+              <div style="font-size:12px;color:var(--muted)">${escapeHtml(it.phone || '')}</div>
+            </div>
+            <div class="muted" style="font-size:13px;margin-top:6px">${escapeHtml(it.service || 'Serviço')} • ${when}</div>
+            ${created ? `<div class="muted" style="font-size:11px;margin-top:6px">Registrado: ${created}</div>` : ''}
+          </div>
+        `;
+      }).join('');
+      bookingsListEl.innerHTML = html;
+    }
+
+    // small sanitizer for UI text
+    function escapeHtml(str = '') {
+      return String(str).replace(/[&<>"']/g, function (m) {
+        return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' })[m];
+      });
+    }
+
+    // POST helper with offline fallback
+    async function postBooking(payload){
+      try {
+        const res = await fetch(API_BASE, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+          const text = await res.text().catch(()=>null);
+          throw new Error(text || 'Erro do servidor');
+        }
+        const data = await res.json().catch(()=>null);
+        return { ok: true, data };
+      } catch (err) {
+        // fallback: store in localStorage and return success:false
+        const cached = JSON.parse(localStorage.getItem('bookings-offline') || '[]');
+        const offlineItem = Object.assign({ id: Date.now(), createdAt: new Date().toISOString() }, payload);
+        cached.push(offlineItem);
+        localStorage.setItem('bookings-offline', JSON.stringify(cached));
+        return { ok: false, offlineItem, error: err.message };
+      }
+    }
+
+    // mini booking form submit (modal)
+    const miniBookingForm = qs('#miniBooking');
+    if(miniBookingForm){
+      miniBookingForm.addEventListener('submit', async e=>{
+        e.preventDefault();
+        const name = (qs('#mname') || {value:''}).value.trim();
+        const phone = (qs('#mphone') || {value:''}).value.trim();
+        const date = (qs('#mdate') || {value:''}).value;
+        if(!name || !phone) {
+          showFeedback('Preencha nome e telefone.', false);
+          return;
+        }
+        const payload = { name, phone, date, time: '', service: 'Agendamento rápido', createdAt: new Date().toISOString() };
+        // optimistic UI + disable button
+        const submitBtn = miniBookingForm.querySelector('button[type="submit"]');
+        if(submitBtn) submitBtn.disabled = true;
+        const res = await postBooking(payload);
+        if(res.ok){
+          closeModal();
+          showFeedback('Agendamento recebido! Obrigado.', true);
+        } else {
+          // offline fallback message
+          closeModal();
+          showFeedback('Sem conexão com o servidor — agendamento salvo localmente.', true);
+        }
+        if(submitBtn) submitBtn.disabled = false;
+        refreshBookings();
+        miniBookingForm.reset();
+      });
+    }
+
+    // full contact/booking form
+    const contactForm = qs('#contactForm');
+    if(contactForm){
+      contactForm.addEventListener('submit', async e=>{
+        e.preventDefault();
+        const name = (qs('#name') || {value:''}).value.trim();
+        const phone = (qs('#phone') || {value:''}).value.trim();
+        const service = (qs('#service') || {value:''}).value;
+        const date = (qs('#date') || {value:''}).value;
+        const time = (qs('#time') || {value:''}).value;
+        const notes = (qs('#notes') || {value:''}).value.trim();
+        if(!name || !phone){
+          showFeedback('Preencha nome e telefone.', false);
+          return;
+        }
+        const payload = { name, phone, service, date, time, notes, createdAt: new Date().toISOString() };
+        const submitBtn = contactForm.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+        const res = await postBooking(payload);
+        if (res.ok) {
+          showFeedback('Obrigado! Agendamento enviado com sucesso.', true);
+          contactForm.reset();
+        } else {
+          showFeedback('Servidor indisponível — agendamento salvo localmente.', true);
+        }
+        if (submitBtn) submitBtn.disabled = false;
+        refreshBookings();
+      });
+    }
+
+    // try to set min date for date inputs
     const today = new Date().toISOString().split('T')[0];
     ['#date','#mdate'].forEach(id=>{
       const el = qs(id);
       if(el) el.setAttribute('min', today);
     });
+
+    // keyboard accessibility: close modal / lightbox with Esc
+    document.addEventListener('keydown', e=>{
+      if(e.key === 'Escape'){
+        closeModal();
+        hideLightbox();
+      }
+    });
+
+    // initial load: show existing bookings
+    refreshBookings();
   </script>
 </body>
 </html>
