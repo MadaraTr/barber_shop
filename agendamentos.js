@@ -28,7 +28,7 @@ Agendamento.sync({ force: false });
 */
 const router = express.Router();
 
-router.post("/agendamentos", async (req, res) => {
+router.post("https://barber-shop-bpgi.onrender.com/agendamentos", async (req, res) => {
     try {
         const { name, phone, service, date, time, notes } = req.body || {};
 
@@ -45,13 +45,10 @@ router.post("/agendamentos", async (req, res) => {
             notes: notes || null,
         });
 
-        // O ideal é retornar um 201 Created com os dados do agendamento
-        return res.status(201).json(ag); 
-
-    } catch (error) {
-        console.error("Erro ao criar agendamento:", error);
-        // Retorna um erro 500 para falhas internas do servidor/BD
-        return res.status(500).json({ error: "Internal server error" }); 
+        return res.status(201).json({ success: true, agendamento: ag });
+    } catch (err) {
+        console.error("Erro ao criar agendamento:", err);
+        return res.status(500).json({ error: "internal_server_error" });
     }
 });
 
