@@ -264,8 +264,9 @@
     // small helpers
     const qs = s => document.querySelector(s);
     const qsa = s => Array.from(document.querySelectorAll(s));
+    const log = (...args) => console.debug('[booking]', ...args);
 
-    // --- API endpoint (adjust to your backend) ---
+    // --- API endpoint (ajuste se necessário) ---
     const API_SUBMIT_URL = '/api/agendamento';
     // ------------------------------------------------
 
@@ -273,17 +274,40 @@
     const yearEl = qs('#year');
     if (yearEl) yearEl.textContent = new Date().getFullYear();
 
+    // make feedback area accessible
+    const feedbackEl = qs('#feedback');
+    if (feedbackEl) {
+      feedbackEl.setAttribute('role', 'status');
+      feedbackEl.setAttribute('aria-live', 'polite');
+    }
+
+    function showFeedback(msg, ok = true, timeout = 4000) {
+      const f = feedbackEl || qs('#feedback');
+      if (!f) {
+        alert(msg);
+        return;
+      }
+      if (ok) {
+        f.innerHTML = `<div class="success">${msg}</div>`;
+      } else {
+        f.innerHTML = `<div style="background:#7a2b2b;padding:10px;border-radius:10px;color:#ffecec;font-weight:700;text-align:center">${msg}</div>`;
+      }
+      if (timeout > 0) setTimeout(()=> { f.innerHTML = ''; }, timeout);
+    }
+
     // smooth scroll for internal anchors
     qsa('a[href^="#"]').forEach(a => {
       a.addEventListener('click', e => {
+        const href = a.getAttribute('href');
+        if (!href || href === '#') return;
         e.preventDefault();
-        const id = a.getAttribute('href').slice(1);
+        const id = href.slice(1);
         const el = document.getElementById(id);
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     });
 
-    // Booking modal
+    // -- Modal / Booking controls --
     const overlay = qs('#overlay');
     const modalTitle = qs('#modalTitle');
     const openBookingBtns = [qs('#openBooking'), qs('#bookNow')].filter(Boolean);
@@ -308,52 +332,80 @@
     if (qs('#cancelModal')) qs('#cancelModal').addEventListener('click', closeModal);
     if (overlay) overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
 
-    // mini booking (modal) - POST
+    // -- Helpers for network --
+    async function postJSON(url, payload) {
+      log('POST ->', url, payload);
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload)
+      });
+      return resp;
+    }
+
+    async function handleResponse(resp) {
+      const text = await resp.text().catch(()=> '');
+      const contentType = resp.headers.get('content-type') || '';
+      let json = null;
+      if (contentType.includes('application/json')) {
+        try { json = JSON.parse(text); } catch(e) { json = null; }
+      }
+      return { ok: resp.ok, status: resp.status, json, text };
+    }
+
+    // -- Mini booking (modal) --
     const miniBooking = qs('#miniBooking');
     if (miniBooking) {
       miniBooking.addEventListener('submit', async e => {
         e.preventDefault();
         const form = e.currentTarget;
+        const submitBtn = form.querySelector('button[type="submit"]');
         const name = (qs('#mname')?.value || '').trim();
         const phone = (qs('#mphone')?.value || '').trim();
-        const date = (qs('#mdate')?.value || '').trim(); // modal has no time field
+        const date = (qs('#mdate')?.value || '').trim();
+
         if (!name || !phone) {
           showFeedback('Preencha nome e telefone.', false);
           return;
         }
 
-        closeModal();
-
-        const bookingData = { name, phone, date, form: 'miniBooking' };
+        const bookingData = { name, phone, date: date || null, source: 'miniBooking' };
 
         try {
-          const resp = await fetch(API_SUBMIT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(bookingData)
-          });
+          if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Enviando…'; }
+          const resp = await postJSON(API_SUBMIT_URL, bookingData);
+          const parsed = await handleResponse(resp);
+          log('response', parsed);
 
-          if (resp.ok) {
+          if (parsed.ok) {
             showFeedback('✅ Agendamento recebido! Entraremos em contato.', true);
             form.reset();
+            closeModal();
           } else {
-            const err = await resp.text().catch(()=> '');
-            console.error('Erro no agendamento (POST):', resp.status, err);
-            showFeedback('❌ Erro ao agendar. Tente novamente mais tarde.', false);
+            const message = parsed.json?.error || parsed.text || `Erro: ${parsed.status}`;
+            console.error('Erro no agendamento (modal):', parsed);
+            showFeedback(`❌ ${message}`, false, 6000);
           }
         } catch (err) {
-          console.error('Erro de rede/conexão:', err);
-          showFeedback('❌ Falha na conexão. Verifique sua rede.', false);
+          console.error('Erro de rede/conexão (modal):', err);
+          showFeedback('❌ Falha na conexão. Verifique sua rede.', false, 6000);
+        } finally {
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Confirmar'; }
         }
       });
     }
 
-    // main contact/booking form - POST
+    // -- Main contact/booking form --
     const contactForm = qs('#contactForm');
     if (contactForm) {
       contactForm.addEventListener('submit', async e => {
         e.preventDefault();
         const form = e.currentTarget;
+        const submitBtn = form.querySelector('button[type="submit"]');
         const name = (qs('#name')?.value || '').trim();
         const phone = (qs('#phone')?.value || '').trim();
         const service = (qs('#service')?.value || '').trim();
@@ -366,57 +418,43 @@
           return;
         }
 
-        const contactData = { name, phone, service, date, time, notes, form: 'contactForm' };
+        const contactData = { name, phone, service, date: date || null, time: time || null, notes: notes || null, source: 'contactForm' };
 
         try {
-          const resp = await fetch(API_SUBMIT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(contactData)
-          });
+          if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Enviando…'; }
+          const resp = await postJSON(API_SUBMIT_URL, contactData);
+          const parsed = await handleResponse(resp);
+          log('response', parsed);
 
-          if (resp.ok) {
+          if (parsed.ok) {
             showFeedback('✅ Obrigado! Solicitação enviada com sucesso.', true);
             form.reset();
           } else {
-            const err = await resp.text().catch(()=> '');
-            console.error('Erro no contato (POST):', resp.status, err);
-            showFeedback('❌ Erro ao enviar a solicitação. Tente novamente mais tarde.', false);
+            const message = parsed.json?.error || parsed.text || `Erro: ${parsed.status}`;
+            console.error('Erro no contato (POST):', parsed);
+            showFeedback(`❌ ${message}`, false, 6000);
           }
         } catch (err) {
-          console.error('Erro de rede/conexão:', err);
-          showFeedback('❌ Falha na conexão. Verifique sua rede.', false);
+          console.error('Erro de rede/conexão (contact):', err);
+          showFeedback('❌ Falha na conexão. Verifique sua rede.', false, 6000);
+        } finally {
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Enviar / Agendar'; }
         }
       });
     }
 
-    // show feedback in the UI (reuse .success style, inline style for errors)
-    function showFeedback(msg, ok) {
-      const f = qs('#feedback');
-      if (!f) {
-        alert(msg);
-        return;
-      }
-      if (ok) {
-        f.innerHTML = `<div class="success">${msg}</div>`;
-      } else {
-        f.innerHTML = `<div style="background:#7a2b2b;padding:10px;border-radius:10px;color:#ffecec;font-weight:700;text-align:center">${msg}</div>`;
-      }
-      setTimeout(()=>{ f.innerHTML = ''; }, 4000);
-    }
-
-    // Gallery lightbox
+    // -- Gallery lightbox --
     qsa('.thumb').forEach(t => {
       t.addEventListener('click', () => {
-        const src = t.getAttribute('data-src') || (t.style.backgroundImage || '').replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
+        const dataSrc = t.getAttribute('data-src') || '';
+        const cssUrl = t.style.backgroundImage || '';
+        const src = dataSrc || cssUrl.replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
         const caption = t.getAttribute('alt') || '';
-        qs('#lightboxImg').src = src;
-        qs('#lightboxCaption').textContent = caption;
+        const lbImg = qs('#lightboxImg');
         const lb = qs('#lightbox');
-        if (lb) {
-          lb.classList.add('show');
-          lb.setAttribute('aria-hidden', 'false');
-        }
+        if (lbImg) lbImg.src = src;
+        if (qs('#lightboxCaption')) qs('#lightboxCaption').textContent = caption;
+        if (lb) { lb.classList.add('show'); lb.setAttribute('aria-hidden', 'false'); }
       });
     });
 
@@ -433,7 +471,7 @@
     const lightboxEl = qs('#lightbox');
     if (lightboxEl) lightboxEl.addEventListener('click', e => { if (e.target === lightboxEl) hideLightbox(); });
 
-    // input masks for phone fields (works whether id present or input[type="tel"])
+    // mask for phone inputs
     qsa('input[id*="phone"], input[type="tel"]').forEach(input => {
       input.addEventListener('input', e => {
         let v = (e.target.value || '').replace(/\D/g, '');
@@ -459,10 +497,10 @@
       if (el) el.setAttribute('min', today);
     });
 
-    // example GET request helper (not invoked by default)
+    // debug helper (optional)
     async function fetchDataExample() {
       try {
-        const resp = await fetch('/api/dados');
+        const resp = await fetch('/api/dados', {credentials: 'same-origin'});
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
         console.log('Dados recebidos (GET):', data);
