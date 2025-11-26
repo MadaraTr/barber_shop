@@ -526,14 +526,15 @@
             emptyState.style.display = 'none';
             
             tbody.innerHTML = data.map(ag => {
-                // Usar a função auxiliar para obter valores
-                const id = getFieldValue(ag, 'id');
-                const nome = getFieldValue(ag, 'nome');
-                const telefone = getFieldValue(ag, 'telefone');
-                const servico = getFieldValue(ag, 'servico');
-                const data_ag = getFieldValue(ag, 'data');
-                const horario = getFieldValue(ag, 'horario');
-                const observacoes = getFieldValue(ag, 'observacoes');
+
+                // Usar os nomes dos campos em inglês retornados pelo banco
+                const id = ag.id;
+                const nome = ag.name || '';
+                const telefone = ag.phone || '';
+                const servico = ag.service || '';
+                const data_ag = ag.date || '';
+                const horario = ag.time || '';
+                const observacoes = ag.notes || '';
                 
                 // DEBUG: Log para cada agendamento
                 console.log(`Agendamento ID ${id}:`, {
@@ -580,18 +581,18 @@
 
         // Função para editar agendamento
         function editAgendamento(id) {
-            const agendamento = agendamentos.find(ag => getFieldValue(ag, 'id') === id);
+            const agendamento = agendamentos.find(ag => ag.id === id);
             if (!agendamento) return;
             
             editingId = id;
             document.getElementById('modalTitle').textContent = 'Editar Agendamento';
             document.getElementById('agendamentoId').value = id;
-            document.getElementById('nome').value = getFieldValue(agendamento, 'nome') || '';
-            document.getElementById('telefone').value = getFieldValue(agendamento, 'telefone') || '';
-            document.getElementById('servico').value = getFieldValue(agendamento, 'servico') || '';
-            document.getElementById('data').value = getFieldValue(agendamento, 'data') || '';
-            document.getElementById('horario').value = getFieldValue(agendamento, 'horario') || '';
-            document.getElementById('observacoes').value = getFieldValue(agendamento, 'observacoes') || '';
+            document.getElementById('nome').value = agendamento.name || '';
+            document.getElementById('telefone').value = agendamento.phone || '';
+            document.getElementById('servico').value = agendamento.service || '';
+            document.getElementById('data').value = agendamento.date || '';
+            document.getElementById('horario').value = agendamento.time || '';
+            document.getElementById('observacoes').value = agendamento.notes || '';
             
             document.getElementById('agendamentoModal').style.display = 'block';
         }
@@ -710,13 +711,13 @@
                 const searchTerm = e.target.value.toLowerCase();
                 
                 const filtered = agendamentos.filter(ag => {
-                    const nome = getFieldValue(ag, 'nome');
-                    const telefone = getFieldValue(ag, 'telefone');
-                    const servico = getFieldValue(ag, 'servico');
+                    const nome = ag.name || '';
+                    const telefone = ag.phone || '';
+                    const servico = ag.service || '';
                     
-                    return (nome && nome.toLowerCase().includes(searchTerm)) ||
-                           (telefone && telefone.toLowerCase().includes(searchTerm)) ||
-                           (servico && servico.toLowerCase().includes(searchTerm));
+                    return nome.toLowerCase().includes(searchTerm) ||
+                           telefone.toLowerCase().includes(searchTerm) ||
+                           servico.toLowerCase().includes(searchTerm);
                 });
                 
                 renderAgendamentos(filtered);
