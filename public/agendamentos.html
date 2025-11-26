@@ -544,13 +544,13 @@
                 
                 return `
                     <tr>
-                        <td>${id || '-'}</td>
-                        <td>${nome || '-'}</td>
-                        <td>${telefone || '-'}</td>
-                        <td>${servico || '-'}</td>
-                        <td>${data_ag ? formatDate(data_ag) : '-'}</td>
-                        <td>${horario || '-'}</td>
-                        <td>${observacoes || '-'}</td>
+                        <td>${id || ''}</td>
+                        <td>${nome || ''}</td>
+                        <td>${telefone || ''}</td>
+                        <td>${servico || ''}</td>
+                        <td>${data_ag ? formatDate(data_ag) : ''}</td>
+                        <td>${horario || ''}</td>
+                        <td>${observacoes || ''}</td>
                         <td>
                             <div class="action-buttons">
                                 <button class="btn btn-warning btn-small" onclick="editAgendamento(${id})">✏️ Editar</button>
