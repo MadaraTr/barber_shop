@@ -378,24 +378,24 @@
                         </tr>
                     </thead>
                     <tbody id="agendamentosBody">
-                        <!-- Dados serão inseridos aqui via JavaScript -->
                     </tbody>
                 </table>
             </div>
 
             <div id="emptyState" class="empty-state" style="display: none;">
-                <i>📅</i>
+                <span style="font-size: 4em;">📅</span>
                 <h3>Nenhum agendamento encontrado</h3>
-                <p>Clique em "Novo Agendamento" para adicionar o primeiro agendamento.</p>
+                <p>Clique em "Novo Agendamento" para adicionar o primeiro.</p>
             </div>
         </div>
     </div>
 
-    <!-- Modal para Adicionar/Editar Agendamento -->
+    <!-- Modal de Agendamento -->
     <div id="agendamentoModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
             <h2 id="modalTitle">Novo Agendamento</h2>
+            
             <form id="agendamentoForm">
                 <input type="hidden" id="agendamentoId">
                 
@@ -456,6 +456,32 @@
             setupSearchFilter();
         });
 
+        // Função auxiliar para obter valor de campo (case-insensitive)
+        function getFieldValue(obj, fieldName) {
+            // Tenta o nome exato
+            if (obj[fieldName] !== undefined) {
+                return obj[fieldName];
+            }
+            
+            // Tenta em maiúsculas
+            if (obj[fieldName.toUpperCase()] !== undefined) {
+                return obj[fieldName.toUpperCase()];
+            }
+            
+            // Tenta em minúsculas
+            if (obj[fieldName.toLowerCase()] !== undefined) {
+                return obj[fieldName.toLowerCase()];
+            }
+            
+            // Tenta primeira letra maiúscula
+            const capitalized = fieldName.charAt(0).toUpperCase() + fieldName.slice(1).toLowerCase();
+            if (obj[capitalized] !== undefined) {
+                return obj[capitalized];
+            }
+            
+            return null;
+        }
+
         // Função para carregar agendamentos (GET)
         async function loadAgendamentos() {
             try {
@@ -467,6 +493,14 @@
                 }
                 
                 agendamentos = await response.json();
+                
+                // DEBUG: Mostrar no console o que está sendo retornado
+                console.log('Dados recebidos do servidor:', agendamentos);
+                if (agendamentos.length > 0) {
+                    console.log('Exemplo de objeto:', agendamentos[0]);
+                    console.log('Chaves do objeto:', Object.keys(agendamentos[0]));
+                }
+                
                 renderAgendamentos(agendamentos);
                 showLoading(false);
             } catch (error) {
@@ -491,23 +525,41 @@
             table.style.display = 'table';
             emptyState.style.display = 'none';
             
-            tbody.innerHTML = data.map(ag => `
-                <tr>
-                    <td>${ag.id}</td>
-                    <td>${ag.nome || '-'}</td>
-                    <td>${ag.telefone || '-'}</td>
-                    <td>${ag.servico || '-'}</td>
-                    <td>${ag.data ? formatDate(ag.data) : '-'}</td>
-                    <td>${ag.horario || '-'}</td>
-                    <td>${ag.observacoes || '-'}</td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="btn btn-warning btn-small" onclick="editAgendamento(${ag.id})">✏️ Editar</button>
-                            <button class="btn btn-danger btn-small" onclick="deleteAgendamento(${ag.id})">🗑️ Deletar</button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = data.map(ag => {
+                // Usar a função auxiliar para obter valores
+                const id = getFieldValue(ag, 'id');
+                const nome = getFieldValue(ag, 'nome');
+                const telefone = getFieldValue(ag, 'telefone');
+                const servico = getFieldValue(ag, 'servico');
+                const data_ag = getFieldValue(ag, 'data');
+                const horario = getFieldValue(ag, 'horario');
+                const observacoes = getFieldValue(ag, 'observacoes');
+                
+                // DEBUG: Log para cada agendamento
+                console.log(`Agendamento ID ${id}:`, {
+                    nome: nome,
+                    telefone: telefone,
+                    servico: servico
+                });
+                
+                return `
+                    <tr>
+                        <td>${id || '-'}</td>
+                        <td>${nome || '-'}</td>
+                        <td>${telefone || '-'}</td>
+                        <td>${servico || '-'}</td>
+                        <td>${data_ag ? formatDate(data_ag) : '-'}</td>
+                        <td>${horario || '-'}</td>
+                        <td>${observacoes || '-'}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn btn-warning btn-small" onclick="editAgendamento(${id})">✏️ Editar</button>
+                                <button class="btn btn-danger btn-small" onclick="deleteAgendamento(${id})">🗑️ Deletar</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         // Função para formatar data
@@ -528,18 +580,18 @@
 
         // Função para editar agendamento
         function editAgendamento(id) {
-            const agendamento = agendamentos.find(ag => ag.id === id);
+            const agendamento = agendamentos.find(ag => getFieldValue(ag, 'id') === id);
             if (!agendamento) return;
             
             editingId = id;
             document.getElementById('modalTitle').textContent = 'Editar Agendamento';
             document.getElementById('agendamentoId').value = id;
-            document.getElementById('nome').value = agendamento.nome || '';
-            document.getElementById('telefone').value = agendamento.telefone || '';
-            document.getElementById('servico').value = agendamento.servico || '';
-            document.getElementById('data').value = agendamento.data || '';
-            document.getElementById('horario').value = agendamento.horario || '';
-            document.getElementById('observacoes').value = agendamento.observacoes || '';
+            document.getElementById('nome').value = getFieldValue(agendamento, 'nome') || '';
+            document.getElementById('telefone').value = getFieldValue(agendamento, 'telefone') || '';
+            document.getElementById('servico').value = getFieldValue(agendamento, 'servico') || '';
+            document.getElementById('data').value = getFieldValue(agendamento, 'data') || '';
+            document.getElementById('horario').value = getFieldValue(agendamento, 'horario') || '';
+            document.getElementById('observacoes').value = getFieldValue(agendamento, 'observacoes') || '';
             
             document.getElementById('agendamentoModal').style.display = 'block';
         }
@@ -658,9 +710,13 @@
                 const searchTerm = e.target.value.toLowerCase();
                 
                 const filtered = agendamentos.filter(ag => {
-                    return (ag.nome && ag.nome.toLowerCase().includes(searchTerm)) ||
-                           (ag.telefone && ag.telefone.toLowerCase().includes(searchTerm)) ||
-                           (ag.servico && ag.servico.toLowerCase().includes(searchTerm));
+                    const nome = getFieldValue(ag, 'nome');
+                    const telefone = getFieldValue(ag, 'telefone');
+                    const servico = getFieldValue(ag, 'servico');
+                    
+                    return (nome && nome.toLowerCase().includes(searchTerm)) ||
+                           (telefone && telefone.toLowerCase().includes(searchTerm)) ||
+                           (servico && servico.toLowerCase().includes(searchTerm));
                 });
                 
                 renderAgendamentos(filtered);
