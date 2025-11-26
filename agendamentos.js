@@ -45,7 +45,7 @@ function normalizeFields(body) {
 }
 
 // Listar todos os agendamentos
-router.get("/", async (req, res) => {
+router.get("/agendamentos", async (req, res) => {
     try {
         const items = await Agendamento.findAll({
             order: [['date', 'DESC'], ['time', 'DESC']]
