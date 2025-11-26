@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Agendamentos - Barber Shop</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .actions {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(250, 112, 154, 0.4);
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            letter-spacing: 0.5px;
+        }
+
+        tbody tr {
+            transition: background-color 0.3s ease;
+        }
+
+        tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.9em;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 40px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 4em;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+
+            table {
+                font-size: 0.9em;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+                margin: 10% auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💈 Gerenciar Agendamentos</h1>
+            <p>Sistema de Gestão de Agendamentos da Barbearia</p>
+        </header>
+
+        <div class="actions">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Pesquisar por nome, telefone ou serviço...">
+            </div>
+            <button class="btn btn-primary" onclick="openAddModal()">➕ Novo Agendamento</button>
+            <button class="btn btn-success" onclick="loadAgendamentos()">🔄 Atualizar</button>
+            <a href="index.html" class="btn btn-warning">🏠 Voltar ao Site</a>
+        </div>
+
+        <div class="content">
+            <div id="alertContainer"></div>
+            
+            <div id="loadingIndicator" class="loading" style="display: none;">
+                Carregando agendamentos...
+            </div>
+
+            <div class="table-container">
+                <table id="agendamentosTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Telefone</th>
+                            <th>Serviço</th>
+                            <th>Data</th>
+                            <th>Horário</th>
+                            <th>Observações</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="agendamentosBody">
+                        <!-- Dados serão inseridos aqui via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <i>📅</i>
+                <h3>Nenhum agendamento encontrado</h3>
+                <p>Clique em "Novo Agendamento" para adicionar o primeiro agendamento.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Adicionar/Editar Agendamento -->
+    <div id="agendamentoModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Novo Agendamento</h2>
+            <form id="agendamentoForm">
+                <input type="hidden" id="agendamentoId">
+                
+                <div class="form-group">
+                    <label for="nome">Nome *</label>
+                    <input type="text" id="nome" name="nome" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="telefone">Telefone *</label>
+                    <input type="tel" id="telefone" name="telefone" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="servico">Serviço</label>
+                    <select id="servico" name="servico">
+                        <option value="">Selecione um serviço</option>
+                        <option value="Corte de Cabelo">Corte de Cabelo</option>
+                        <option value="Barba">Barba</option>
+                        <option value="Corte + Barba">Corte + Barba</option>
+                        <option value="Sobrancelha">Sobrancelha</option>
+                        <option value="Pigmentação">Pigmentação</option>
+                        <option value="Hidratação">Hidratação</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="data">Data</label>
+                    <input type="date" id="data" name="data">
+                </div>
+
+                <div class="form-group">
+                    <label for="horario">Horário</label>
+                    <input type="time" id="horario" name="horario">
+                </div>
+
+                <div class="form-group">
+                    <label for="observacoes">Observações</label>
+                    <textarea id="observacoes" name="observacoes" placeholder="Observações adicionais..."></textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-danger" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis globais
+        let agendamentos = [];
+        let editingId = null;
+
+        // Carregar agendamentos ao iniciar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAgendamentos();
+            setupSearchFilter();
+        });
+
+        // Função para carregar agendamentos (GET)
+        async function loadAgendamentos() {
+            try {
+                showLoading(true);
+                const response = await fetch('/agendamentos');
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao carregar agendamentos');
+                }
+                
+                agendamentos = await response.json();
+                renderAgendamentos(agendamentos);
+                showLoading(false);
+            } catch (error) {
+                console.error('Erro:', error);
+                showAlert('Erro ao carregar agendamentos: ' + error.message, 'error');
+                showLoading(false);
+            }
+        }
+
+        // Função para renderizar agendamentos na tabela
+        function renderAgendamentos(data) {
+            const tbody = document.getElementById('agendamentosBody');
+            const emptyState = document.getElementById('emptyState');
+            const table = document.getElementById('agendamentosTable');
+            
+            if (data.length === 0) {
+                table.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            table.style.display = 'table';
+            emptyState.style.display = 'none';
+            
+            tbody.innerHTML = data.map(ag => `
+                <tr>
+                    <td>${ag.id}</td>
+                    <td>${ag.nome || '-'}</td>
+                    <td>${ag.telefone || '-'}</td>
+                    <td>${ag.servico || '-'}</td>
+                    <td>${ag.data ? formatDate(ag.data) : '-'}</td>
+                    <td>${ag.horario || '-'}</td>
+                    <td>${ag.observacoes || '-'}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-warning btn-small" onclick="editAgendamento(${ag.id})">✏️ Editar</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteAgendamento(${ag.id})">🗑️ Deletar</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Função para formatar data
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString + 'T00:00:00');
+            return date.toLocaleDateString('pt-BR');
+        }
+
+        // Função para abrir modal de adicionar
+        function openAddModal() {
+            editingId = null;
+            document.getElementById('modalTitle').textContent = 'Novo Agendamento';
+            document.getElementById('agendamentoForm').reset();
+            document.getElementById('agendamentoId').value = '';
+            document.getElementById('agendamentoModal').style.display = 'block';
+        }
+
+        // Função para editar agendamento
+        function editAgendamento(id) {
+            const agendamento = agendamentos.find(ag => ag.id === id);
+            if (!agendamento) return;
+            
+            editingId = id;
+            document.getElementById('modalTitle').textContent = 'Editar Agendamento';
+            document.getElementById('agendamentoId').value = id;
+            document.getElementById('nome').value = agendamento.nome || '';
+            document.getElementById('telefone').value = agendamento.telefone || '';
+            document.getElementById('servico').value = agendamento.servico || '';
+            document.getElementById('data').value = agendamento.data || '';
+            document.getElementById('horario').value = agendamento.horario || '';
+            document.getElementById('observacoes').value = agendamento.observacoes || '';
+            
+            document.getElementById('agendamentoModal').style.display = 'block';
+        }
+
+        // Função para fechar modal
+        function closeModal() {
+            document.getElementById('agendamentoModal').style.display = 'none';
+            document.getElementById('agendamentoForm').reset();
+            editingId = null;
+        }
+
+        // Função para salvar agendamento (POST ou PATCH)
+        document.getElementById('agendamentoForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                nome: document.getElementById('nome').value,
+                telefone: document.getElementById('telefone').value,
+                servico: document.getElementById('servico').value,
+                data: document.getElementById('data').value,
+                horario: document.getElementById('horario').value,
+                observacoes: document.getElementById('observacoes').value
+            };
+            
+            try {
+                let response;
+                
+                if (editingId) {
+                    // PATCH - Atualizar agendamento existente
+                    response = await fetch(`/agendamentos/${editingId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+                } else {
+                    // POST - Criar novo agendamento
+                    response = await fetch('/agendamentos', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+                }
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Erro ao salvar agendamento');
+                }
+                
+                const result = await response.json();
+                showAlert(result.message || 'Agendamento salvo com sucesso!', 'success');
+                closeModal();
+                loadAgendamentos();
+            } catch (error) {
+                console.error('Erro:', error);
+                showAlert('Erro ao salvar agendamento: ' + error.message, 'error');
+            }
+        });
+
+        // Função para deletar agendamento (DELETE)
+        async function deleteAgendamento(id) {
+            if (!confirm('Tem certeza que deseja deletar este agendamento?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/agendamentos/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Erro ao deletar agendamento');
+                }
+                
+                const result = await response.json();
+                showAlert(result.message || 'Agendamento deletado com sucesso!', 'success');
+                loadAgendamentos();
+            } catch (error) {
+                console.error('Erro:', error);
+                showAlert('Erro ao deletar agendamento: ' + error.message, 'error');
+            }
+        }
+
+        // Função para mostrar alertas
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+            
+            alertContainer.innerHTML = `
+                <div class="alert ${alertClass}">
+                    ${message}
+                </div>
+            `;
+            
+            const alertElement = alertContainer.querySelector('.alert');
+            alertElement.style.display = 'block';
+            
+            setTimeout(() => {
+                alertElement.style.display = 'none';
+            }, 5000);
+        }
+
+        // Função para mostrar/ocultar loading
+        function showLoading(show) {
+            document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
+        }
+
+        // Função para configurar filtro de pesquisa
+        function setupSearchFilter() {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                
+                const filtered = agendamentos.filter(ag => {
+                    return (ag.nome && ag.nome.toLowerCase().includes(searchTerm)) ||
+                           (ag.telefone && ag.telefone.toLowerCase().includes(searchTerm)) ||
+                           (ag.servico && ag.servico.toLowerCase().includes(searchTerm));
+                });
+                
+                renderAgendamentos(filtered);
+            });
+        }
+
+        // Fechar modal ao clicar fora dele
+        window.onclick = function(event) {
+            const modal = document.getElementById('agendamentoModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
