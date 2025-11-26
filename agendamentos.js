@@ -28,7 +28,7 @@ Agendamento.sync({ force: false });
 */
 const router = express.Router();
 
-router.post("/agendamentos", async (req, res) => {
+router.post("/", async (req, res) => {
     try {
         const { name, phone, service, date, time, notes } = req.body || {};
 

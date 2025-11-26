@@ -261,25 +261,25 @@
   </div>
 
   <script>
-    // small helper
+    // small helpers
     const qs = s => document.querySelector(s);
-    const qsa = s => document.querySelectorAll(s);
-    
-    // --- Configurações da API (ajuste conforme o seu backend) ---
-    const API_BOOKING_URL = '/api/agendamento'; // Exemplo para POST
-    // const API_DATA_URL = '/api/dados'; // Exemplo para GET (não usado abaixo, mas é um exemplo)
-    // -------------------------------------------------------------
+    const qsa = s => Array.from(document.querySelectorAll(s));
+
+    // --- API endpoint (adjust to your backend) ---
+    const API_SUBMIT_URL = '/api/agendamento';
+    // ------------------------------------------------
 
     // dynamic year
-    qs('#year').textContent = new Date().getFullYear();
+    const yearEl = qs('#year');
+    if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-    // smooth scroll
-    document.querySelectorAll('a[href^="#"]').forEach(a=>{
-      a.addEventListener('click', e=>{
+    // smooth scroll for internal anchors
+    qsa('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
         e.preventDefault();
         const id = a.getAttribute('href').slice(1);
         const el = document.getElementById(id);
-        if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     });
 
@@ -287,160 +287,189 @@
     const overlay = qs('#overlay');
     const modalTitle = qs('#modalTitle');
     const openBookingBtns = [qs('#openBooking'), qs('#bookNow')].filter(Boolean);
-    openBookingBtns.forEach(b=>b.addEventListener('click', ()=> openModal()));
 
-    function openModal(){
+    function openModal() {
+      if (!overlay) return;
       modalTitle.textContent = 'Agendamento rápido';
       overlay.classList.add('show');
-      overlay.setAttribute('aria-hidden','false');
-      qs('#mname').focus();
+      overlay.setAttribute('aria-hidden', 'false');
+      const mname = qs('#mname');
+      if (mname) mname.focus();
     }
-    function closeModal(){
+
+    function closeModal() {
+      if (!overlay) return;
       overlay.classList.remove('show');
-      overlay.setAttribute('aria-hidden','true');
+      overlay.setAttribute('aria-hidden', 'true');
     }
-    qs('#closeModal').addEventListener('click', closeModal);
-    qs('#cancelModal').addEventListener('click', closeModal);
-    overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModal(); });
 
-    // handle mini booking - AGORA COM POST
-    qs('#miniBooking').addEventListener('submit', async e=>{
-      e.preventDefault();
-      const name = qs('#mname').value.trim();
-      const phone = qs('#mphone').value.trim();
-      const date = qs('#mdate').value; // Incluindo a data
-      const time = qs('#mtime').value; // Incluindo a hora
-      
-      if(!name || !phone){
-        alert('Preencha nome e telefone.');
-        return;
-      }
-      
-      closeModal();
-      
-      const bookingData = { name, phone, date, time, form: 'miniBooking' };
+    openBookingBtns.forEach(btn => btn.addEventListener('click', openModal));
+    if (qs('#closeModal')) qs('#closeModal').addEventListener('click', closeModal);
+    if (qs('#cancelModal')) qs('#cancelModal').addEventListener('click', closeModal);
+    if (overlay) overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
 
-      try {
-        const response = await fetch(API_BOOKING_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(bookingData),
-        });
-
-        if (response.ok) {
-          showFeedback('✅ Agendamento recebido! Entraremos em contato.', true);
-          e.target.reset(); // Limpa o formulário após o sucesso
-        } else {
-          // Tenta ler a mensagem de erro do backend, se disponível
-          const errorText = await response.text();
-          console.error('Erro no agendamento (POST):', response.status, errorText);
-          showFeedback('❌ Erro ao agendar. Tente novamente mais tarde.', false);
+    // mini booking (modal) - POST
+    const miniBooking = qs('#miniBooking');
+    if (miniBooking) {
+      miniBooking.addEventListener('submit', async e => {
+        e.preventDefault();
+        const form = e.currentTarget;
+        const name = (qs('#mname')?.value || '').trim();
+        const phone = (qs('#mphone')?.value || '').trim();
+        const date = (qs('#mdate')?.value || '').trim(); // modal has no time field
+        if (!name || !phone) {
+          showFeedback('Preencha nome e telefone.', false);
+          return;
         }
-      } catch (error) {
-        console.error('Erro de rede/conexão:', error);
-        showFeedback('❌ Falha na conexão. Verifique sua rede.', false);
-      }
-    });
 
-    // Contact form submit - AGORA COM POST
-    qs('#contactForm').addEventListener('submit', async e=>{
-      e.preventDefault();
-      const name = qs('#name').value.trim();
-      const phone = qs('#phone').value.trim();
-      const email = qs('#email').value.trim(); // Se você tiver um campo de email
-      const message = qs('#message').value.trim(); // Se você tiver um campo de mensagem
-      
-      if(!name || !phone){
-        showFeedback('Preencha nome e telefone.', false);
-        return;
-      }
-      
-      const contactData = { name, phone, email, message, form: 'contactForm' };
+        closeModal();
 
-      try {
-        const response = await fetch(API_BOOKING_URL, { // Usando o mesmo endpoint de exemplo
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(contactData),
-        });
+        const bookingData = { name, phone, date, form: 'miniBooking' };
 
-        if (response.ok) {
-          showFeedback('✅ Obrigado! Solicitação enviada com sucesso.', true);
-          e.target.reset();
-        } else {
-          const errorText = await response.text();
-          console.error('Erro no contato (POST):', response.status, errorText);
-          showFeedback('❌ Erro ao enviar a solicitação. Tente novamente mais tarde.', false);
+        try {
+          const resp = await fetch(API_SUBMIT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bookingData)
+          });
+
+          if (resp.ok) {
+            showFeedback('✅ Agendamento recebido! Entraremos em contato.', true);
+            form.reset();
+          } else {
+            const err = await resp.text().catch(()=> '');
+            console.error('Erro no agendamento (POST):', resp.status, err);
+            showFeedback('❌ Erro ao agendar. Tente novamente mais tarde.', false);
+          }
+        } catch (err) {
+          console.error('Erro de rede/conexão:', err);
+          showFeedback('❌ Falha na conexão. Verifique sua rede.', false);
         }
-      } catch (error) {
-        console.error('Erro de rede/conexão:', error);
-        showFeedback('❌ Falha na conexão. Verifique sua rede.', false);
-      }
-    });
+      });
+    }
 
-    function showFeedback(msg, ok){
+    // main contact/booking form - POST
+    const contactForm = qs('#contactForm');
+    if (contactForm) {
+      contactForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const form = e.currentTarget;
+        const name = (qs('#name')?.value || '').trim();
+        const phone = (qs('#phone')?.value || '').trim();
+        const service = (qs('#service')?.value || '').trim();
+        const date = (qs('#date')?.value || '').trim();
+        const time = (qs('#time')?.value || '').trim();
+        const notes = (qs('#notes')?.value || '').trim();
+
+        if (!name || !phone) {
+          showFeedback('Preencha nome e telefone.', false);
+          return;
+        }
+
+        const contactData = { name, phone, service, date, time, notes, form: 'contactForm' };
+
+        try {
+          const resp = await fetch(API_SUBMIT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(contactData)
+          });
+
+          if (resp.ok) {
+            showFeedback('✅ Obrigado! Solicitação enviada com sucesso.', true);
+            form.reset();
+          } else {
+            const err = await resp.text().catch(()=> '');
+            console.error('Erro no contato (POST):', resp.status, err);
+            showFeedback('❌ Erro ao enviar a solicitação. Tente novamente mais tarde.', false);
+          }
+        } catch (err) {
+          console.error('Erro de rede/conexão:', err);
+          showFeedback('❌ Falha na conexão. Verifique sua rede.', false);
+        }
+      });
+    }
+
+    // show feedback in the UI (reuse .success style, inline style for errors)
+    function showFeedback(msg, ok) {
       const f = qs('#feedback');
-      // Adicionado a classe 'error' para feedback visual de erro
-      f.innerHTML = '<div class="'+(ok? 'success' : 'error')+'">'+msg+'</div>';
+      if (!f) {
+        alert(msg);
+        return;
+      }
+      if (ok) {
+        f.innerHTML = `<div class="success">${msg}</div>`;
+      } else {
+        f.innerHTML = `<div style="background:#7a2b2b;padding:10px;border-radius:10px;color:#ffecec;font-weight:700;text-align:center">${msg}</div>`;
+      }
       setTimeout(()=>{ f.innerHTML = ''; }, 4000);
     }
 
     // Gallery lightbox
-    qsa('.thumb').forEach(t=>{
-      t.addEventListener('click', ()=>{
-        const src = t.getAttribute('data-src') || t.style.backgroundImage.slice(5,-2);
+    qsa('.thumb').forEach(t => {
+      t.addEventListener('click', () => {
+        const src = t.getAttribute('data-src') || (t.style.backgroundImage || '').replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
+        const caption = t.getAttribute('alt') || '';
         qs('#lightboxImg').src = src;
-        qs('#lightboxCaption').textContent = t.getAttribute('alt') || '';
-        qs('#lightbox').classList.add('show');
-        qs('#lightbox').setAttribute('aria-hidden','false');
+        qs('#lightboxCaption').textContent = caption;
+        const lb = qs('#lightbox');
+        if (lb) {
+          lb.classList.add('show');
+          lb.setAttribute('aria-hidden', 'false');
+        }
       });
     });
-    qs('#closeLightbox').addEventListener('click', ()=>{ hideLightbox(); });
-    qs('#lightbox').addEventListener('click', e=>{ if(e.target===qs('#lightbox')) hideLightbox(); });
-    function hideLightbox(){ qs('#lightbox').classList.remove('show'); qs('#lightbox').setAttribute('aria-hidden','true'); qs('#lightboxImg').src=''; }
 
-    // small input masks (phone)
-    document.querySelectorAll('input[type="tel"], #phone, #mphone').forEach(input=>{
-      input.addEventListener('input', e=>{
-        let v = e.target.value.replace(/\D/g,'');
-        if(v.length>11) v = v.slice(0,11);
-        v = v.replace(/^(\d{2})(\d)/g,'($1) $2');
+    function hideLightbox() {
+      const lb = qs('#lightbox');
+      if (!lb) return;
+      lb.classList.remove('show');
+      lb.setAttribute('aria-hidden', 'true');
+      const img = qs('#lightboxImg');
+      if (img) img.src = '';
+    }
+
+    if (qs('#closeLightbox')) qs('#closeLightbox').addEventListener('click', hideLightbox);
+    const lightboxEl = qs('#lightbox');
+    if (lightboxEl) lightboxEl.addEventListener('click', e => { if (e.target === lightboxEl) hideLightbox(); });
+
+    // input masks for phone fields (works whether id present or input[type="tel"])
+    qsa('input[id*="phone"], input[type="tel"]').forEach(input => {
+      input.addEventListener('input', e => {
+        let v = (e.target.value || '').replace(/\D/g, '');
+        if (v.length > 11) v = v.slice(0,11);
+        v = v.replace(/^(\d{2})(\d)/g, '($1) $2');
         v = v.replace(/(\d{5})(\d{4})$/,'$1-$2');
         e.target.value = v;
       });
     });
 
-    // keyboard accessibility: close modal with Esc
-    document.addEventListener('keydown', e=>{
-      if(e.key==='Escape'){
+    // keyboard accessibility: close modal/lightbox with Esc
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
         closeModal();
         hideLightbox();
       }
     });
 
-    // simple progressive enhancement: set min date for booking
+    // set min date for date inputs
     const today = new Date().toISOString().split('T')[0];
-    ['#date','#mdate'].forEach(id=>{
+    ['#date', '#mdate'].forEach(id => {
       const el = qs(id);
-      if(el) el.setAttribute('min', today);
+      if (el) el.setAttribute('min', today);
     });
-    
-    // EXEMPO ADICIONAL: Função para requisição GET (não vinculada a um evento no código atual, apenas para referência)
-    async function fetchDataExample() {
-        try {
-            const response = await fetch('/api/dados'); // Endpoint de exemplo
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            console.log('Dados recebidos (GET):', data);
-            // Faça algo com os dados, por exemplo, preencher uma lista
-        } catch (error) {
-            console.error('Erro ao buscar dados (GET):', error);
-        }
-    }
-    // Para testar o GET, você poderia chamar fetchDataExample() ao carregar a página, por exemplo.
 
-</script>
+    // example GET request helper (not invoked by default)
+    async function fetchDataExample() {
+      try {
+        const resp = await fetch('/api/dados');
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        console.log('Dados recebidos (GET):', data);
+      } catch (err) {
+        console.error('Erro ao buscar dados (GET):', err);
+      }
+    }
+  </script>
 </body>
 </html>
